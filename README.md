@@ -35,7 +35,7 @@ The input videos should be saved in the Videos directory. After processing, the 
 
 
 
-## 5. Project Files
+# 5. Project Files
 
 This project consists of the following four main Python files:
 
@@ -65,7 +65,7 @@ Once you run `mainProcess.py`, it will automatically:
 - Filter and validate ROIs to ensure the quality of the results.
 - Save the processed video and results in the appropriate directories.
 
-### 6. Processing the Video
+# 6. Processing the Video
 
 To start processing a video, follow these steps:
 
