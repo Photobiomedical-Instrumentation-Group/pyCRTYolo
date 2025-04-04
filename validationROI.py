@@ -1,111 +1,175 @@
-import tkinter as tk
-from tkinter import messagebox
-import random
+import tkinter as tk 
+from tkinter import ttk
+from PIL import Image, ImageTk
+import cv2
+import decord
 import numpy as np
 
-from dataOperation import showROI # Import the show_roi function from dataOperations.py
-
-
-def roiValidation():
-    """
-    Displays a dialog asking if the Region of Interest (ROI) is correct.
-
-    Returns:
-        bool: True if the user confirms the ROI is correct, False otherwise.
-    """
-    root = tk.Tk()
-    root.withdraw()  # Hide the main Tkinter window
-    
-    # Show a message box asking if the ROI is correct
-    response = messagebox.askyesno("ROI Validation", "Is this ROI correct?")
-    
-    if response:  # If the user clicks "Yes"
-        print("ROI saved successfully!")
-        return True
-    else:  # If the user clicks "No"
-        print("Choose a new ROI.")
-        return False
-
-
-
-def filterROI(rois, threshold=2):
-    """
-    Filters ROIs by removing those whose difference between consecutive 
-    rows in x, y, width (w), or height (h) is greater than the threshold.
-
-    Parameters:
-        rois (list of tuples): List of ROIs, each defined by (x, y, w, h).
-        threshold (int, optional): The maximum allowed difference between consecutive ROIs.
-
-    Returns:
-        list of tuples: A list of filtered ROIs.
-    """
-    filtered_rois = []
-    
-    for i in range(1, len(rois)):  # Start from the second element
-        x1, y1, w1, h1 = rois[i-1]
-        x2, y2, w2, h2 = rois[i]
+class ROIValidator:
+    def __init__(self, video_path, rois, significant_frame):
+        self.root = tk.Tk()
+        self.root.title("ROI Validation Tool")
+        self.root.geometry("1200x800")
         
-        # Calculate the differences between the current ROI and the previous one
-        if (
-            abs(x2 - x1) <= threshold and 
-            abs(y2 - y1) <= threshold and 
-            abs(w2 - w1) <= threshold and 
-            abs(h2 - h1) <= threshold
-        ):
-            filtered_rois.append((x2, y2, w2, h2))  # Ensure it's a tuple
-
-    return filtered_rois  # Returns a list of tuples, not a NumPy array!
-
-def validateROI(video_name,video_path, rois, significant_frame, distance_limit=10):
-    """
-    Validates ROIs by asking the user if they are correct and removing nearby ROIs.
-
-    Parameters:
-        video_path (str): Path to the video for displaying frames.
-        rois (list of tuples): List of ROIs to be validated.
-        significant_frame (int): The frame number to be displayed.
-        distance_limit (int, optional): Minimum distance to filter nearby ROIs.
-
-    Returns:
-        tuple or None: The validated ROI if accepted, or None if all ROIs are rejected.
-    """
-    while rois:  # Ensure there are ROIs to validate
-        # Choose a random ROI
-        selected_roi = random.choice(rois)
+        self.video_path = video_path
+        self.rois = rois
+        self.significant_frame = significant_frame
+        self.current_roi_idx = 0
         
-        # Display the frame with the selected ROI
-        showROI(video_path, selected_roi, significant_frame)
+        self.create_widgets()
+        self.update_display()
         
-        # Ask the user if the ROI is correct
-        if roiValidation():
-            # Save the ROI if the user confirms it is correct
-            with open(f'SaveRois/{video_name}_validated.txt', 'w') as f:
-                f.write(str(selected_roi))
-            return selected_roi  # Return the validated ROI and exit
+    def create_widgets(self):
+        # Main frame
+        main_frame = ttk.Frame(self.root)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        # Display area
+        self.image_frame = ttk.Frame(main_frame)
+        self.image_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Labels for images
+        self.original_label = ttk.Label(self.image_frame)
+        self.original_label.pack(side=tk.LEFT, expand=True)
+        
+        self.roi_label = ttk.Label(self.image_frame)
+        self.roi_label.pack(side=tk.RIGHT, expand=True)
+        
+        # Controls
+        control_frame = ttk.Frame(main_frame)
+        control_frame.pack(fill=tk.X, pady=20)
+        
+        self.btn_prev = ttk.Button(
+            control_frame,
+            text="← Previous",
+            command=self.prev_roi,
+            style='TButton',
+            state=tk.DISABLED
+        )
+        self.btn_prev.pack(side=tk.LEFT, padx=10)
+        
+        self.btn_accept = ttk.Button(
+            control_frame,
+            text="Accept ROI ✓",
+            command=self.accept_roi,
+            style='Success.TButton'
+        )
+        self.btn_accept.pack(side=tk.LEFT, padx=10)
+        
+        self.btn_reject = ttk.Button(
+            control_frame,
+            text="Reject ✗",
+            command=self.reject_roi,
+            style='Danger.TButton'
+        )
+        self.btn_reject.pack(side=tk.LEFT, padx=10)
+        
+        self.btn_next = ttk.Button(
+            control_frame,
+            text="Next ROI →",
+            command=self.next_roi,
+            style='TButton'
+        )
+        self.btn_next.pack(side=tk.RIGHT, padx=10)
+        
+        # Style configuration
+        style = ttk.Style()
+        style.configure('TButton', font=('Helvetica', 16), padding=15)
+        style.configure('Success.TButton', foreground='green', font=('Helvetica', 16, 'bold'))
+        style.configure('Danger.TButton', foreground='red', font=('Helvetica', 16, 'bold'))
 
-        else:
-            # If the ROI is rejected, remove nearby ROIs
-            rois = [roi for roi in rois if calculate_distance(selected_roi, roi) > distance_limit]
-            print(f"ROI rejected! {len(rois)} ROIs remaining after filtering nearby ones.")
+    def load_images(self):
+        vr = decord.VideoReader(self.video_path)
+        frame = vr[self.significant_frame].asnumpy()
+        x, y, w, h = self.current_roi
+        
+        # Original image with ROI highlighted
+        frame_with_roi = cv2.rectangle(
+            frame.copy(), 
+            (x, y), 
+            (x + w, y + h), 
+            (0, 255, 0), 
+            3
+        )
+        
+        # Cropped ROI image
+        roi_image = frame[y:y+h, x:x+w]
+        
+        return frame_with_roi, roi_image
 
-    print("No valid ROI found.")
-    return None  # Return None if all ROIs are rejected
+    def update_display(self):
+        original_img, roi_img = self.load_images()
+        
+        # Process images for display
+        original_img = cv2.resize(original_img, (800, 600))
+        roi_img = cv2.resize(roi_img, (600, 600)) if roi_img.size > 0 else np.zeros((600,600,3), dtype=np.uint8)
+        
+        # Convert to Tkinter format
+        self.original_photo = ImageTk.PhotoImage(Image.fromarray(original_img))
+        self.roi_photo = ImageTk.PhotoImage(Image.fromarray(roi_img))
+        
+        # Update labels
+        self.original_label.config(image=self.original_photo)
+        self.roi_label.config(image=self.roi_photo)
+        
+        # Update button states
+        self.btn_prev["state"] = tk.NORMAL if self.current_roi_idx > 0 else tk.DISABLED
+        self.btn_next["state"] = tk.NORMAL if self.current_roi_idx < len(self.rois)-1 else tk.DISABLED
 
-def calculate_distance(roi1, roi2):
+    @property
+    def current_roi(self):
+        return self.rois[self.current_roi_idx]
+
+    def prev_roi(self):
+        if self.current_roi_idx > 0:
+            self.current_roi_idx -= 1
+            self.update_display()
+
+    def next_roi(self):
+        if self.current_roi_idx < len(self.rois)-1:
+            self.current_roi_idx += 1
+            self.update_display()
+
+    def accept_roi(self):
+        self.selected_roi = self.current_roi
+        self.root.destroy()
+
+    def reject_roi(self):
+        self.rois.pop(self.current_roi_idx)
+        if self.current_roi_idx >= len(self.rois):
+            self.current_roi_idx = len(self.rois)-1
+        self.update_display()
+
+    def run(self):
+        self.root.mainloop()
+        return getattr(self, 'selected_roi', None)
+
+# Modified main function
+
+def validateROI(video_name, video_path, rois, significant_frame, scale_factor):
     """
-    Calculates the Euclidean distance between the centers of two ROIs.
-
+    Validate ROIs considering scaled coordinates
+    
     Parameters:
-        roi1 (tuple): The first ROI, defined by (x, y, w, h).
-        roi2 (tuple): The second ROI, defined by (x, y, w, h).
-
-    Returns:
-        float: The Euclidean distance between the centers of the two ROIs.
+    scale_factor (float): Fator de escalonamento usado no pré-processamento
+                          (ex: 0.5 para redução de 50%)
     """
-    x1, y1, w1, h1 = roi1
-    x2, y2, w2, h2 = roi2
-    center1 = np.array([x1 + w1 / 2, y1 + h1 / 2])
-    center2 = np.array([x2 + w2 / 2, y2 + h2 / 2])
-    return np.linalg.norm(center1 - center2)  # Euclidean distance
+    
+    # Converter ROIs para coordenadas originais
+    original_rois = [(int(x/scale_factor), 
+                      int(y/scale_factor), 
+                      int(w/scale_factor), 
+                      int(h/scale_factor)) 
+                     for (x,y,w,h) in rois]
 
+    # Validar com resolução original
+    validator = ROIValidator(video_path, original_rois, significant_frame)
+    selected_roi = validator.run()
+    
+    if selected_roi:
+        with open(f'SaveRois/{video_name}_validated.txt', 'w') as f:
+            f.write(str(selected_roi))
+        return selected_roi
+    
+    print("No valid ROI selected.")
+    return None

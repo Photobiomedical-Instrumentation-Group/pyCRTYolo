@@ -1,4 +1,8 @@
-import ast
+import decord
+from decord import cpu, gpu
+import cv2
+import numpy as np
+
 import cv2
 import pandas as pd
 import torch
@@ -11,12 +15,7 @@ from tkinter import messagebox
 import matplotlib.pyplot as plt
 import sys
 
-
-    
- 
-# Load the custom YOLOv5 model
-model = torch.hub.load('ultralytics/yolov5', 'custom', path='finger.pt', force_reload=True, trust_repo=False)
-
+model = torch.hub.load('ultralytics/yolov5', 'custom', path='finger.pt')
 
 def detectFinger(image, confidenceThreshold):
     """
@@ -36,6 +35,8 @@ def detectFinger(image, confidenceThreshold):
     return results
 
 
+
+
 def hasSkinImage(videoPath):
     """
     Check if the video contains skin images using HSV and YCrCb color spaces.
@@ -46,15 +47,17 @@ def hasSkinImage(videoPath):
     Returns:
         Boolean indicating the presence of skin-like regions.
     """
-    cap = cv2.VideoCapture(videoPath)
+    vr = decord.VideoReader(videoPath, ctx=cpu(0))  # Usar GPU se disponível: decord.gpu(0)
     hasSkin = False
 
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        hsvImage = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    for i in range(len(vr)):
+        frame = vr[i].asnumpy()  # Frame em RGB
+        
+        # Converter para BGR para OpenCV
+        frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        
+        # Processamento mantido igual
+        hsvImage = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2HSV)
         lowerHsv = np.array([0, 20, 80], dtype="uint8")
         upperHsv = np.array([255, 255, 255], dtype="uint8")
         hsvMask = cv2.inRange(hsvImage, lowerHsv, upperHsv)
@@ -70,9 +73,8 @@ def hasSkinImage(videoPath):
             hasSkin = True
             break
 
-    cap.release()
+    del vr
     return hasSkin
-
 
 def processDetectFinger(inputVideo, outputVideo, roiFile, confidenceThreshold):
     """
@@ -88,22 +90,24 @@ def processDetectFinger(inputVideo, outputVideo, roiFile, confidenceThreshold):
         print("No skin images found. Add another video")
         return
 
-    videoCapture = cv2.VideoCapture(inputVideo)
-    frameWidth = int(videoCapture.get(cv2.CAP_PROP_FRAME_WIDTH))
-    frameHeight = int(videoCapture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(outputVideo, fourcc, 30, (frameWidth, frameHeight))
-
+    vr = decord.VideoReader(inputVideo, ctx=cpu(0))
+    writer = cv2.VideoWriter(
+        outputVideo,
+        cv2.VideoWriter_fourcc(*'mp4v'),
+        vr.get_avg_fps(),
+        (vr[0].shape[1], vr[0].shape[0]))
+    
     roiValues = []
 
-    while True:
-        ret, frame = videoCapture.read()
-        if not ret:
-            break
-
-        results = detectFinger(frame, confidenceThreshold)
-        detectedFrame = np.copy(results.render()[0])
-
+    for i in range(len(vr)):
+        frame = vr[i].asnumpy()  # RGB
+        frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        
+        # Detecção YOLO
+        results = detectFinger(frame_bgr, confidenceThreshold)  # Assume YOLO precisa de BGR
+        detectedFrame = results.render()[0]
+        
+        # Processamento de ROIs (mesma lógica)
         if len(results.xyxy[0]) > 0:
             for detection in results.xyxy[0]:
                 x1, y1, x2, y2 = map(int, detection[0:4])
@@ -112,13 +116,13 @@ def processDetectFinger(inputVideo, outputVideo, roiFile, confidenceThreshold):
                 roiWidth = int((x2 - x1))
                 roiHeight = int((y2 - y1))
                 roiPcrt = (centerX - int(roiWidth / 2), centerY - int(roiHeight / 2), roiWidth, roiHeight)
-                roiValues.append(roiPcrt)
+                roiValues.append(roiPcrt) # possiveis ROIs candidatas 
 
-        out.write(detectedFrame)
+        writer.write(detectedFrame)
 
-    videoCapture.release()
-    out.release()
-
+    writer.release()
+    del vr
+    
     print(f"Processing complete. Video saved as {outputVideo}")
 
     roiDir = os.path.dirname(roiFile)
@@ -130,4 +134,3 @@ def processDetectFinger(inputVideo, outputVideo, roiFile, confidenceThreshold):
         for roi in roiValues:
             f.write(f"{roi}\n")
     print(f"ROI values saved in {roiFile}")
-

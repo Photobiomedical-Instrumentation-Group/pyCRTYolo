@@ -1,8 +1,16 @@
-import cv2
+
 
 import matplotlib.pyplot as plt
 import ast
 import os 
+    
+import cv2
+import numpy as np
+import decord
+
+import os
+import glob
+
 
 def openTXT(filePath):
     """
@@ -92,3 +100,67 @@ def ensure_directories_exist():
    
     if not os.path.exists('SaveRois'):
         os.makedirs('SaveRois')
+        
+    if not os.path.exists('VideoFrame'):
+        os.makedirs('VideoFrame')
+ 
+    
+
+
+# Modifique a função transformVideoframe1010 em dataOperation.py
+def transformVideoframe1010(inputName, outputName, numberFrames, scale_factor):
+    vr = decord.VideoReader(inputName, ctx=decord.cpu(0))
+    
+    try:
+        indices = np.arange(0, len(vr), numberFrames)
+        frames = vr.get_batch(indices).asnumpy()
+        
+        # Redução de resolução
+        resized_frames = [cv2.resize(frame, None, fx=scale_factor, fy=scale_factor) 
+                         for frame in frames]
+        
+        # Configurar vídeo de saída
+        if resized_frames:
+            height, width = resized_frames[0].shape[:2]
+            fps = int(vr.get_avg_fps() // numberFrames)
+            
+            writer = cv2.VideoWriter(
+                outputName,
+                cv2.VideoWriter_fourcc(*'mp4v'),
+                fps,
+                (width, height)
+            )
+
+            for frame in resized_frames:
+                writer.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+            writer.release()
+    
+    finally:
+        del vr
+        
+        
+
+def get_latest_video(folder_path, extensions=('mp4', 'avi', 'mov', 'mkv')):
+    """
+    Retorna o vídeo mais recente na pasta especificada.
+    
+    Parâmetros:
+    - folder_path: Caminho da pasta onde os vídeos estão salvos
+    - extensions: Extensões de arquivo consideradas (padrão: formatos comuns de vídeo)
+    
+    Retorna:
+    - Caminho completo do vídeo mais recente
+    """
+    # Lista todos os arquivos com as extensões especificadas
+    video_files = []
+    for ext in extensions:
+        video_files.extend(glob.glob(os.path.join(folder_path, f'*.{ext}')))
+    
+    if not video_files:
+        raise FileNotFoundError(f"Nenhum vídeo encontrado em {folder_path} com as extensões {extensions}")
+    
+    # Encontra o arquivo mais recente usando o timestamp de modificação
+    latest_video = max(video_files, key=os.path.getmtime)
+    
+    return latest_video
+

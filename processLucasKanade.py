@@ -10,7 +10,7 @@ def calculateMovement(oldPoints, newPoints):
     """
     return np.mean([np.sqrt((a - c) ** 2 + (b - d) ** 2) for (a, b), (c, d) in zip(newPoints, oldPoints)])
 
-def processLucasKanade(videoPath, rois):
+def processLucasKanade(videoPath, rois,numberFrames):
     """
     Process the video using the Lucas-Kanade Optical Flow algorithm.
     """
@@ -72,7 +72,7 @@ def processLucasKanade(videoPath, rois):
             p0 = goodNew.reshape(-1, 1, 2)
 
         if len(movementOverTime) == 0:
-            print(f"No movement detected in ROI {roi}. Skipping.")
+            #print(f"No movement detected in ROI {roi}. Skipping.")
             continue  # Skip this ROI and move to the next  
 
         movementOverTime = np.array(movementOverTime)
@@ -82,33 +82,33 @@ def processLucasKanade(videoPath, rois):
 
     cap.release()
 
-    plt.figure(figsize=(10, 5))
+    #plt.figure(figsize=(10, 5))
 
     bestIntensity = -np.inf
-    bestCurveIndex = None
+
 
     for idx, (roi, movementOverTime, frames) in enumerate(movementData):
         significantMaxFrame = next((i for i, m in enumerate(movementOverTime) 
                                       if m > movementThreshold and 
                                       (i == 0 or movementOverTime[i-1] <= movementThreshold)), None)
 
-        plt.plot(movementOverTime, label=f'ROI {idx+1}')
+        #plt.plot(movementOverTime, label=f'ROI {idx+1}')
 
         if significantMaxFrame is not None and movementOverTime[significantMaxFrame] > bestIntensity:
             significantMaxFrame = significantMaxFrame
             bestIntensity = movementOverTime[significantMaxFrame]
-            bestCurveIndex = idx
+        significantMaxFrame=significantMaxFrame* numberFrames
+        #plt.plot(significantMaxFrame, bestIntensity, 'ro', label=f'Max Intensity ROI {bestCurveIndex+1}')
 
-        plt.plot(significantMaxFrame, bestIntensity, 'ro', label=f'Max Intensity ROI {bestCurveIndex+1}')
-
-    plt.legend()
-    plt.xlabel('Frames')
-    plt.ylabel('Normalized Intensity')
-    plt.title('Movement Analysis')
+    #plt.legend()
+    #plt.xlabel('Frames')
+    #plt.ylabel('Normalized Intensity')
+    #plt.title('Movement Analysis')
 
     # Save the plot to a file
-    plt.savefig('movement_analysis.png')
-    plt.close()
+    #plt.savefig('movement_analysis.png')
+    #plt.close()
+    
 
     significantMaxFrameShift = significantMaxFrame - 20
     return significantMaxFrameShift
