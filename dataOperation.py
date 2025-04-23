@@ -10,7 +10,7 @@ import decord
 
 import os
 import glob
-
+import subprocess
 
 def openTXT(filePath):
     """
@@ -164,3 +164,20 @@ def get_latest_video(folder_path, extensions=('mp4', 'avi', 'mov', 'mkv')):
     
     return latest_video
 
+
+
+def transformVideoframe1010_ffmpeg(inputName, outputName, numberFrames, scale_factor):
+    cmd = [
+        'ffmpeg',
+        '-i', inputName,
+        '-vf', f"select=not(mod(n\,{numberFrames})), scale=iw*{scale_factor}:ih*{scale_factor}",
+        '-vsync', 'vfr',
+        '-c:v', 'libx264',  # Ou 'h264_nvenc' para GPU NVIDIA
+        '-preset', 'fast',
+        '-crf', '23',
+        '-an',  # Remove áudio
+        '-y',  # Sobrescreve arquivo
+        outputName
+    ]
+    
+    subprocess.run(cmd, check=True)

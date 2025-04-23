@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from processYolo import processDetectFinger
 from processLucasKanade import processLucasKanade
 from validationROI import validateROI
-from dataOperation import openTXT, ensure_directories_exist,transformVideoframe1010,get_latest_video
+from dataOperation import openTXT, ensure_directories_exist,transformVideoframe1010,get_latest_video,transformVideoframe1010_ffmpeg
 
 sys.path.append("C:/Users/raque/OneDrive/Documentos/GitHub/pyCRT")
 from src.pyCRT import PCRT
@@ -53,13 +53,13 @@ ensure_directories_exist()
 scale_factor=0.2  # Scale factor for resizing the video
 # Step 0 : transform video em 10-10 frames# Início da etapa 1
 numberFrames=10
-calculatetimeprocess(transformVideoframe1010, inputVideo, outputVideoframe,numberFrames,scale_factor)
+calculatetimeprocess(transformVideoframe1010_ffmpeg, inputVideo, outputVideoframe,numberFrames,scale_factor)
 
 
 
 # Step 1: Process the video 
 # Set confidence threshold - find Yolo finger image in the video
-confidence_threshold = 0.60
+confidence_threshold = 0.80
 calculatetimeprocess(processDetectFinger,outputVideoframe, outputVideo, roiFile, confidence_threshold)
 print("Video Processing...")
 
@@ -138,7 +138,7 @@ results.append({
     "pCRT": pcrt.pCRT[0],
     "uncert_pCRT": pcrt.pCRT[1],
     "CriticalTime": pcrt.criticalTime,
-    "ROI": roi
+    "ROI": roiCorrect
 })
 
 print(f"Processed: {videoName}")
