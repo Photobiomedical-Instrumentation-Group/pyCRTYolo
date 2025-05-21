@@ -13,8 +13,8 @@ from processLucasKanade import processLucasKanade
 from validationROI import validateROI
 from dataOperation import openTXT, ensure_directories_exist,transformVideoframe1010,get_latest_video,transformVideoframe1010_ffmpeg
 
-sys.path.append("C:/Users/raque/OneDrive/Documentos/GitHub/pyCRT")
-from src.pyCRT import PCRT
+#sys.path.append("C:/Users/raque/OneDrive/Documentos/GitHub/pyCRT")
+from pyCRT import PCRT
 
 
 def calculatetimeprocess(func, *args, **kwargs): 
