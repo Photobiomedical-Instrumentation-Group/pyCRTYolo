@@ -9,8 +9,8 @@ numpy==1.23.5
 matplotlib
 pillow
 pandas>=1.1.5
+decord>=0.6.0
 
-tkinter
-decord
- 
+
+
  
