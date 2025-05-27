@@ -3,25 +3,34 @@
 This project uses the YOLOv5 model to detect finger in videos and calculates the capillary refill time (pCRT) 
 using the pyCRT library. Below are the steps to install dependencies and run the project.
 
-# 1. Install dependencies
-First, install the `pyCRT` library:
+
+
+# 1. Install pyCRT-dev
+⚠️ Important:
+If you have pyCRT version 1.0.0 installed, uninstall it before continuing:
 
 ```bash
-pip install pyCRT
+pip uninstall pyCRT
+pip install pyCRT-dev
+```
+
+```bash
+pip install -r requirements.txt
 ```
 
 # 2. Clone the YOLOv5 repository
 Clone the YOLOv5 repository to use the object detection model:
 
+
 ```bash
 git clone https://github.com/ultralytics/yolov5.git
 ```
 
-# 3. Install YOLOv5 dependencies
-Navigate to the cloned YOLOv5 directory and install the required dependencies:
-```bash
-cd yolov5
-```
+
+
+# 3. Install dependencies
+Install the required dependencies:
+
 ```bash
 python -m pip install -r requirements.txt
 ```
