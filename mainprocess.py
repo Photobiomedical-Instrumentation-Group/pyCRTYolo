@@ -125,7 +125,7 @@ print(tempo_segundos)
 #pcrt = PCRT.fromVideoFile(inputVideo, roi=roiCorrect, displayVideo=False, exclusionMethod='best fit', exclusionCriteria=exclusionCriteria)
 pcrt = calculatetimeprocess(PCRT.fromVideoFile, inputVideo, roi=roiCorrect, displayVideo=False, 
                             exclusionMethod='best fit', exclusionCriteria=exclusionCriteria,
-                            fromTime=tempo_segundos)
+                            fromTime=tempo_segundos,livePlot=False)
 # Check if pCRT could be calculated
 #if pcrt.pCRT[0] < 0.5:
 #    print("Unable to calculate pCRT. Please retake the test.")
