@@ -27,7 +27,7 @@ def calculatetimeprocess(func, *args, **kwargs):
     result = func(*args, **kwargs)
     end_time = time.time()
     elapsed_time = end_time - start_time
-    print(f"Tempo de processamento de {func.__name__}: {elapsed_time:.6f} segundos")
+    #print(f"Tempo de processamento de {func.__name__}: {elapsed_time:.6f} segundos")
     return result
 
 # Paths for input and output videos
