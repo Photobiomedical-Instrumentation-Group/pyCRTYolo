@@ -3,8 +3,7 @@ torch>=2.6.0
 torchvision==0.15.2
 torchaudio==2.0.2
 
-# YOLOv5 essentials
-opencv-python-headless
+opencv-python
 numpy==1.23.5
 matplotlib
 pillow
