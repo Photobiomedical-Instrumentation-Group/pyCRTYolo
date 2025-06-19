@@ -3,10 +3,10 @@ torch==2.0.1
 torchvision==0.15.2
 torchaudio==2.0.2
 
-opencv-python
+opencv-python==4.11.0
 numpy==1.23.5
-matplotlib
-pillow
+matplotlib==3.9.3
+pillow==10.4.0
 pandas==2.2.3
 decord==0.6.0
 
