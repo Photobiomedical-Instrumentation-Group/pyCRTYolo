@@ -14,10 +14,6 @@ pip uninstall pyCRT
 pip install pyCRT-dev
 ```
 
-```bash
-pip install -r requirements.txt
-```
-
 # 2. Clone the YOLOv5 repository
 Clone the YOLOv5 repository to use the object detection model:
 
@@ -25,7 +21,6 @@ Clone the YOLOv5 repository to use the object detection model:
 ```bash
 git clone https://github.com/ultralytics/yolov5.git
 ```
-
 
 
 # 3. Install dependencies
