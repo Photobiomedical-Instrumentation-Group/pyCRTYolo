@@ -69,9 +69,10 @@ def hasSkinImage(videoPath):
 
         combinedMask = cv2.bitwise_and(hsvMask, ycrcbMask)
 
-        #if np.any(combinedMask):
-        hasSkin = True
-        #break
+        if np.count_nonzero(combinedMask) > 0:
+            hasSkin = True
+        else:
+            hasSkin = False
 
     del vr
     return hasSkin
