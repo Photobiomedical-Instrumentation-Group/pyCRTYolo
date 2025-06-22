@@ -1,114 +1,105 @@
 import cv2
 import numpy as np
 import matplotlib
-matplotlib.use('TkAgg')  # Ensure interactive plotting
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
-def calculateMovement(oldPoints, newPoints):
-    """
-    Calculate the movement between frames.
-    """
-    return np.mean([np.sqrt((a - c) ** 2 + (b - d) ** 2) for (a, b), (c, d) in zip(newPoints, oldPoints)])
+def calculateMovement(oldPts, newPts):
+    """Euclidean distance average between two point sets."""
+    return np.mean(np.linalg.norm(newPts - oldPts, axis=1))
 
-def processLucasKanade(videoPath, rois,numberFrames):
+def processLucasKanade(videoPath, rois, numberFrames, visualize=False):
     """
-    Process the video using the Lucas-Kanade Optical Flow algorithm.
+    Returns the frame index (in original video) at which movement in any ROI 
+    first exceeds 80% of its max, *multiplied* by numberFrames.
+    If visualize=True, plots each ROI's movement curve & threshold.
     """
-    if not isinstance(rois, list) or not all(isinstance(roi, (tuple, list)) and len(roi) == 4 for roi in rois):
-        raise ValueError("Each ROI must be a tuple or list with 4 values.")
-
     cap = cv2.VideoCapture(videoPath)
     if not cap.isOpened():
-        raise ValueError(f"Could not open the video: {videoPath}")
+        raise IOError(f"Cannot open video {videoPath}")
 
-    featureParams = dict(maxCorners=400, qualityLevel=0.3, minDistance=4, blockSize=7)
-    lkParams = dict(winSize=(15, 15), maxLevel=3, criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 15, 0.01))
-
+    # read first frame
     ret, oldFrame = cap.read()
     if not ret:
-        raise ValueError("Could not read the first frame of the video.")
+        cap.release()
+        raise RuntimeError("Cannot read first frame")
 
     oldGray = cv2.cvtColor(oldFrame, cv2.COLOR_BGR2GRAY)
+    featureParams = dict(maxCorners=400, qualityLevel=0.3, minDistance=4, blockSize=7)
+    lkParams = dict(winSize=(15,15), maxLevel=3,
+                    criteria=(cv2.TERM_CRITERIA_EPS|cv2.TERM_CRITERIA_COUNT,15,0.01))
 
-    movementData = []  # Store all normalized movement curves
+    roi_results = []  # list of (roi, movement_curve, threshold)
 
+    # 1) For each ROI, compute movementOverTime
     for roi in rois:
-        x, y, width, height = roi
-        if (x < 0 or y < 0 or x + width > oldGray.shape[1] or y + height > oldGray.shape[0]):
-            raise ValueError(f"The ROI {roi} is out of the image bounds.")
+        x,y,w,h = roi
+        mask = np.zeros_like(oldGray)
+        mask[y:y+h, x:x+w] = 255
 
-        mask = np.zeros_like(oldGray, dtype=np.uint8)
-        mask[y:y+height, x:x+width] = 255
         p0 = cv2.goodFeaturesToTrack(oldGray, mask=mask, **featureParams)
-
         if p0 is None:
-            print(f"No points detected in ROI {roi}. Skipping.")
+            print(f"[WARN] no features in ROI {roi}")
             continue
 
-        movementOverTime = []
-        frames = []
-        oldGrayRoi = oldGray.copy()  # Preserve the initial frame for each ROI
+        movements = []
+        oldRoiGray = oldGray.copy()
 
         while True:
             ret, frame = cap.read()
-            if not ret:
-                break
-
-            frameGray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            p1, st, err = cv2.calcOpticalFlowPyrLK(oldGrayRoi, frameGray, p0, None, **lkParams)
-
-            if p1 is None or st is None or len(p1[st == 1]) == 0:
-                p0 = cv2.goodFeaturesToTrack(oldGrayRoi, mask=mask, **featureParams)
+            if not ret: break
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            p1, st, _ = cv2.calcOpticalFlowPyrLK(oldRoiGray, gray, p0, None, **lkParams)
+            if p1 is None or st is None or not np.any(st==1):
+                p0 = cv2.goodFeaturesToTrack(oldRoiGray, mask=mask, **featureParams)
                 continue
 
-            goodNew = p1[st == 1]
-            goodOld = p0[st == 1]
-            movement = calculateMovement(goodOld, goodNew)
+            goodNew = p1[st==1].reshape(-1,2)
+            goodOld = p0[st==1].reshape(-1,2)
+            movements.append(calculateMovement(goodOld, goodNew))
 
-            movementOverTime.append(movement)
-            frames.append(frame.copy())
+            oldRoiGray = gray.copy()
+            p0 = goodNew.reshape(-1,1,2)
 
-            oldGrayRoi = frameGray.copy()
-            p0 = goodNew.reshape(-1, 1, 2)
+        if not movements:
+            continue
 
-        if len(movementOverTime) == 0:
-            #print(f"No movement detected in ROI {roi}. Skipping.")
-            continue  # Skip this ROI and move to the next  
-
-        movementOverTime = np.array(movementOverTime)
-        movementMin, movementMax = np.min(movementOverTime), np.max(movementOverTime)
-        movementThreshold = 0.8 * movementMax
-        movementData.append((roi, movementOverTime, frames))
+        mov = np.array(movements)
+        threshold = 0.8 * mov.max()
+        roi_results.append((roi, mov, threshold))
 
     cap.release()
 
-    #plt.figure(figsize=(10, 5))
+    if not roi_results:
+        raise RuntimeError("No movement detected in any ROI")
 
-    bestIntensity = -np.inf
+    # 2) Find the *earliest* crossing across all ROIs
+    bestFrame = None
+    for roi, mov, thr in roi_results:
+        # first index where mov > thr
+        idx = np.argmax(mov > thr) if np.any(mov>thr) else None
+        if idx is None:
+            continue
 
+        frame_idx = idx * numberFrames
+        if bestFrame is None or frame_idx < bestFrame:
+            bestFrame = frame_idx
 
-    for idx, (roi, movementOverTime, frames) in enumerate(movementData):
-        significantMaxFrame = next((i for i, m in enumerate(movementOverTime) 
-                                      if m > movementThreshold and 
-                                      (i == 0 or movementOverTime[i-1] <= movementThreshold)), None)
+    if bestFrame is None:
+        raise RuntimeError("No threshold crossing found in any ROI")
 
-        #plt.plot(movementOverTime, label=f'ROI {idx+1}')
+    # 3) Optional: visualize
+    if visualize:
+        plt.figure(figsize=(8,4))
+        for idx,(roi,mov,thr) in enumerate(roi_results,1):
+            plt.plot(np.arange(len(mov))*numberFrames, mov, label=f'ROI{idx}')
+            plt.hlines(thr, 0, len(mov)*numberFrames, colors='k', linestyles='dashed')
+        plt.axvline(bestFrame, color='r', label=f'Chosen frame: {bestFrame}')
+        plt.xlabel('Video frame')
+        plt.ylabel('Avg. optical-flow magnitude')
+        plt.legend()
+        plt.title('Lucas–Kanade movement curves')
+        plt.show()
 
-        if significantMaxFrame is not None and movementOverTime[significantMaxFrame] > bestIntensity:
-            significantMaxFrame = significantMaxFrame
-            bestIntensity = movementOverTime[significantMaxFrame]
-        significantMaxFrame=significantMaxFrame* numberFrames
-        #plt.plot(significantMaxFrame, bestIntensity, 'ro', label=f'Max Intensity ROI {bestCurveIndex+1}')
-
-    #plt.legend()
-    #plt.xlabel('Frames')
-    #plt.ylabel('Normalized Intensity')
-    #plt.title('Movement Analysis')
-
-    # Save the plot to a file
-    #plt.savefig('movement_analysis.png')
-    #plt.close()
-    
-
-    significantMaxFrameShift = significantMaxFrame - 20
-    return significantMaxFrameShift
+    # 4) shift if needed (you had `-30` before)
+    return bestFrame + 40
