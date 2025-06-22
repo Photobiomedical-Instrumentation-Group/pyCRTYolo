@@ -25,7 +25,7 @@ def calculatetimeprocess(func, *args, **kwargs):
     start_time = time.time()
     result = func(*args, **kwargs)
     end_time = time.time()
-    print(f"Processing time for {func.__name__}: {end_time - start_time:.2f} seconds")
+    #print(f"Processing time for {func.__name__}: {end_time - start_time:.2f} seconds")
     return result
 
 # Step 0: Get the most recent video from the folder
