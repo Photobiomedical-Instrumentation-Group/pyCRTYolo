@@ -47,7 +47,7 @@ def hasSkinImage(videoPath):
     Returns:
         Boolean indicating the presence of skin-like regions.
     """
-   cap = cv2.VideoCapture(videoPath)
+    cap = cv2.VideoCapture(videoPath)
   
     while True:
         ret, frame_bgr = cap.read()
