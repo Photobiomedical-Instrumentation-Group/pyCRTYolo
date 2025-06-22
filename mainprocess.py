@@ -118,7 +118,7 @@ def get_frame_time(video_path, frame_number):
     return frame_number / fps
 
 tempo_segundos = get_frame_time(inputVideo, significant_frame)
-print(tempo_segundos)
+#print(tempo_segundos)
 
 # Step 4: Calculate pCRT by pyCRT
 # Calculate pCRT (Capillary Refill Time) using the validated ROI
