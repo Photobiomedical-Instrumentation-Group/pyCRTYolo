@@ -47,16 +47,13 @@ def hasSkinImage(videoPath):
     Returns:
         Boolean indicating the presence of skin-like regions.
     """
-    vr = decord.VideoReader(videoPath, ctx=cpu(0))  # Usar GPU se disponível: decord.gpu(0)
-    hasSkin = False
-
-    for i in range(len(vr)):
-        frame = vr[i].asnumpy()  # Frame em RGB
+   cap = cv2.VideoCapture(videoPath)
+  
+    while True:
+        ret, frame_bgr = cap.read()
+        if not ret:
+            break
         
-        # Converter para BGR para OpenCV
-        frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        
-        # Processamento mantido igual
         hsvImage = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2HSV)
         lowerHsv = np.array([0, 20, 80], dtype="uint8")
         upperHsv = np.array([255, 255, 255], dtype="uint8")
@@ -74,7 +71,6 @@ def hasSkinImage(videoPath):
         else:
             hasSkin = False
 
-    del vr
     return hasSkin
 
 def processDetectFinger(inputVideo, outputVideo, roiFile, confidenceThreshold):
