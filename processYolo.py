@@ -15,7 +15,20 @@ from tkinter import messagebox
 import matplotlib.pyplot as plt
 import sys
 
-model = torch.hub.load('ultralytics/yolov5', 'custom', path='finger.pt')
+import warnings
+# ignore that pkg_resources deprecation warning
+warnings.filterwarnings(
+    "ignore",
+    message="pkg_resources is deprecated.*",
+    category=UserWarning
+)
+
+import logging
+# silence the Ultralytics banner and INFO logs
+logging.getLogger("ultralytics").setLevel(logging.ERROR)
+
+
+model = torch.hub.load('ultralytics/yolov5', 'custom', path='finger.pt',verbose=False )
 
 def detectFinger(image, confidenceThreshold):
     """
@@ -47,6 +60,7 @@ def hasSkinImage(videoPath):
     Returns:
         Boolean indicating the presence of skin-like regions.
     """
+    hasSkin = False
     cap = cv2.VideoCapture(videoPath)
   
     while True:
@@ -59,7 +73,7 @@ def hasSkinImage(videoPath):
         upperHsv = np.array([255, 255, 255], dtype="uint8")
         hsvMask = cv2.inRange(hsvImage, lowerHsv, upperHsv)
 
-        ycrcbImage = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb)
+        ycrcbImage = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2YCrCb)
         lowerYcrcb = np.array([0, 136, 0], dtype="uint8")
         upperYcrcb = np.array([255, 173, 127], dtype="uint8")
         ycrcbMask = cv2.inRange(ycrcbImage, lowerYcrcb, upperYcrcb)
