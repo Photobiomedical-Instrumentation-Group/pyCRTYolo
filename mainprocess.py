@@ -81,7 +81,7 @@ except Exception as e:
 
 # Step 4: Use Lucas-Kanade to find the resting (significant) frame
 try:
-    significant_frame = calculatetimeprocess(processLucasKanade, outputVideoframe, roi_filtered, numberFrames,visualize=True)
+    significant_frame = calculatetimeprocess(processLucasKanade, outputVideoframe, roi_filtered, numberFrames,visualize=False)
     print(f"frame significativo:{significant_frame}")
     if significant_frame is None:
         raise ValueError("No significant frame was found.")
