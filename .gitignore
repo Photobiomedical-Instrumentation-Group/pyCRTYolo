@@ -69,7 +69,7 @@ dmypy.json
 # macOS
 .DS_Store
 
-# Windows
+# Windows/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
@@ -86,3 +86,5 @@ env/
 
 # Ignore all .mp4 video files
 *.mp4
+
+SaveRois/
