@@ -15,7 +15,20 @@ from tkinter import messagebox
 import matplotlib.pyplot as plt
 import sys
 
-model = torch.hub.load('ultralytics/yolov5', 'custom', path='finger.pt')
+import warnings
+# ignore that pkg_resources deprecation warning
+warnings.filterwarnings(
+    "ignore",
+    message="pkg_resources is deprecated.*",
+    category=UserWarning
+)
+
+import logging
+# silence the Ultralytics banner and INFO logs
+logging.getLogger("ultralytics").setLevel(logging.ERROR)
+
+
+model = torch.hub.load('ultralytics/yolov5', 'custom', path='finger.pt',verbose=False )
 
 def detectFinger(image, confidenceThreshold):
     """

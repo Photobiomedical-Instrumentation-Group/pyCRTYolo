@@ -1,15 +1,14 @@
 # Deep Learning core libs
-torch==2.0.1
-torchvision==0.15.2
-torchaudio==2.0.2
+torch==2.2.0
+torchvision==0.17.0
+torchaudio==2.2.0
 
-opencv-python==4.11.0
-numpy==1.23.5
+opencv-python>=4.11.0
+numpy==1.26.4
 matplotlib==3.9.3
 pillow==10.4.0
 pandas==2.2.3
 decord==0.6.0
-
-
-
- 
+pyCRT-dev
+pyCRT==0.0.0; python_version < "0"
+openpyxl==3.1.5
