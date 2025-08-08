@@ -5,13 +5,17 @@ using the pyCRT library. Below are the steps to install dependencies and run the
 
 # 1. Install Packges 
 Install Git
+
 Use the default installation options.
+```
 https://git-scm.com/downloads
+```
 
-
-✅ Install Python 3.10
+Install Python 3.10
 Download and install Python 3.10 from:
+```
 https://www.python.org/downloads/release/python-3100/
+```
 Important: During installation, make sure to check Add Python 3.10 to PATH.
 
 # 2. Install pyCRT-dev
@@ -23,7 +27,7 @@ pip uninstall pyCRT
 pip install pyCRT-dev
 ```
 
-# 2. Clone the YOLOv5 repository
+# 3. Clone the YOLOv5 repository
 Clone the YOLOv5 repository to use the object detection model:
 
 
@@ -34,7 +38,7 @@ python -m pip install -r requirements.txt
 ```
 
 
-# 3. Install dependencies for the pyCRTYolo package
+# 4. Install dependencies for the pyCRTYolo package
 Navigate to the pyCRTYolo directory:
 
 ```bash
@@ -47,7 +51,7 @@ Install the required dependencies:
 python -m pip install -r requirements.txt
 ```
 
-# 4. Project Files
+# 5. Project Files
 
 This project consists of the following four main Python files:
 
@@ -85,7 +89,7 @@ Once you run `mainProcess.py`, it will automatically:
 - Filter and validate ROIs to ensure the quality of the results.
 - Save the processed video and results in the appropriate directories.
 
-# 5. Processing the Video
+# 6. Processing the Video
 
 To start processing a video, follow these steps:
 
@@ -105,7 +109,7 @@ and wish to add it to the trusted list of repositories (y/N)?
 
 Write y and press ENTER.
 
-# 6. Save Videos
+# 7. Save Videos
 
 After processing, the YOLOv5 detection results will be saved in the
 VideosYoloDetect directory.
@@ -114,7 +118,7 @@ VideosYoloDetect directory.
 
 >> Output Video Path: VideosYoloDetect/{videoName}_Yolo.mp4
 
-# 7. Test environment Setup
+# 8. Test environment Setup
 After installing all dependencies and cloning the repositorieis, run the environment test script to verfy that everytihing is properly set up:
 
 ```` testEnvironment.py````
