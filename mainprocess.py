@@ -7,7 +7,7 @@ import time
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-
+from pathlib import Path
 from processYolo import processDetectFinger
 from processLucasKanade import processLucasKanade
 from validationROI import validateROI
@@ -30,20 +30,24 @@ def calculatetimeprocess(func, *args, **kwargs):
 
 # Step 0: Get the most recent video from the folder
 try:
-    video_folder = "Videos"
+    video_folder = Path("Videos")
     inputVideo = get_latest_video(video_folder)
     if inputVideo is None:
         raise FileNotFoundError("No video found in the 'Videos' folder.")
+    inputVideo = Path(inputVideo).as_posix() 
     print(f"Processing the most recent video: {inputVideo}")
 except Exception as e:
     print(f"Error loading video: {e}")
     sys.exit(1)
 
 videoName = os.path.basename(inputVideo)
-outputVideoframe = f"VideoFrame/{videoName}_frame1010.mp4"
-outputVideo = f'VideosYoloDetect/{videoName}_Yolo.mp4'
-roiFile = f'SaveRois/{videoName}.txt'
-scale_factor = 0.5
+outputVideoframe = Path(f"VideoFrame/{videoName}_frame1010.mp4").as_posix()
+outputVideo = Path(f"VideosYoloDetect/{videoName}_Yolo.mp4").as_posix()
+roiFile = Path(f"SaveRois/{videoName}.txt").as_posix()
+output_file_excel = Path(f"SaveExcelData{videoName}.xlsx").as_posix()
+output_file_txt = Path(f"SaveData{videoName}.txt").as_posix()
+
+scale_factor = 0.2
 numberFrames = 10
 exclusionCriteria = 1
 
