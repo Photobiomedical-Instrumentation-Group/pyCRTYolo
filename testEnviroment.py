@@ -10,7 +10,7 @@ import urllib.request
 import zipfile
 import shutil
 
-# -------- Função para verificar FFmpeg --------
+# -------- 1. Function for verify and install FFmpeg --------
 def is_ffmpeg_installed():
     print("\n🧰 Checking if FFmpeg is installed...")
 
@@ -89,7 +89,7 @@ def download_and_install_ffmpeg():
         sys.exit(1)
 
 
-# ====== 1. DEPENDENCY CHECK ======
+# ====== 2. DEPENDENCY CHECK ======
 required_packages = [
     'cv2', 'numpy', 'matplotlib', 'torch', 'decord', 'PIL',
     'tkinter', 'pandas'
@@ -139,7 +139,7 @@ else:
     print("✅ All required packages are installed.")
 
 
-# ====== 2. CHECK AND INSTALL FFMPEG ======
+# ====== 3. CHECK AND INSTALL FFMPEG ======
 if not is_ffmpeg_installed():
     user_input = input("Would you like to download and install FFmpeg automatically? (y/n): ").strip().lower()
     if user_input == 'y':
@@ -151,7 +151,7 @@ else:
     print("✅ FFmpeg check passed.")
 
 
-# ====== 3. MODULE IMPORT CHECK ======
+# ====== 4. MODULE IMPORT CHECK ======
 print("\n📦 Checking module imports...")
 
 modules = [
@@ -169,7 +169,7 @@ for module in modules:
         sys.exit(1)
 
 
-# ====== 4. UNIT TESTS ======
+# ====== 5. UNIT TESTS ======
 print("\n🧪 Running unit tests...")
 
 try:
@@ -213,7 +213,7 @@ except Exception as e:
     print(f"❌ Error preparing ROIValidator test: {e}")
 
 
-# ====== 5. CHECK FOR VIDEO IN 'Videos/' ======
+# ====== 6. CHECK FOR VIDEO IN 'Videos/' ======
 print("\n🎥 Looking for a video in the 'Videos/' directory...")
 
 video_folder = "Videos"
