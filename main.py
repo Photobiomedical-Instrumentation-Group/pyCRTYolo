@@ -139,7 +139,7 @@ try:
         displayVideo=False,
         exclusionMethod='best fit',
         exclusionCriteria=exclusionCriteria,
-        #livePlot=False,
+        livePlot=False,
         fromTime=timestamp_seconds
     )
     pcrt.showAvgIntensPlot()
