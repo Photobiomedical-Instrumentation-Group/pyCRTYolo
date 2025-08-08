@@ -1,3 +1,7 @@
+
+# testEnviroment.py
+# This script checks the environment setup for the pyCRTYolo project.
+
 import importlib
 import subprocess
 import sys
