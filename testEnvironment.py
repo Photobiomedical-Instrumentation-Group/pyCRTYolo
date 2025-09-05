@@ -173,7 +173,7 @@ for module in modules:
 print("\n🧪 Running unit tests...")
 
 try:
-    from processLucasKanade2 import calculateMovement
+    from processLucasKanadev2 import calculateMovement
     import numpy as np
 
     oldPts = np.array([[0, 0], [1, 1]])
@@ -196,7 +196,7 @@ except Exception as e:
     print(f"❌ detectFinger failed: {e}")
 
 try:
-    from validationROI2 import ROIValidator
+    from validationROIv2 import ROIValidator
     dummy_rois = [(100, 100, 50, 50)]
     dummy_video = "test.mp4"
     dummy_frame = 0
@@ -233,4 +233,4 @@ else:
     for f in video_files:
         print(f" - {f}")
 
-print("\n✅ Environment check complete. You're good to go! 🚀")
+print("\n✅ Environment check complete")

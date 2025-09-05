@@ -12,9 +12,9 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from pathlib import Path
 from processYolo import processDetectFinger
-from processLucasKanade2 import processLucasKanade
-from validationROI2 import validateROI
-from dataOperation2 import openTXT, ensure_directories_exist, transformVideoframe1010_ffmpeg, get_latest_video
+from processLucasKanadev2 import processLucasKanade
+from validationROIv2 import validateROI
+from dataOperationv2 import openTXT, ensure_directories_exist, transformVideoframe1010_ffmpeg, get_latest_video
 
 # Load pyCRT locally
 local_pyCRT_path = "C:/Users/raque/OneDrive/Documentos/GitHub/pyCRT"
